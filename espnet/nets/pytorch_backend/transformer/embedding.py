@@ -15,6 +15,8 @@ from packaging.version import parse as V
 from espnet2.asr.frontend.cnn import dim_1_layer_norm
 
 
+from typing import Optional
+
 def _pre_hook(
     state_dict,
     prefix,
