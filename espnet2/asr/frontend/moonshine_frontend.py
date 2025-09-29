@@ -105,5 +105,7 @@ class MoonshineFrontend(AbsFrontend):
             converted to channels-first [B, 1, L] for Conv1d processing.
         """
         # Convert from channels-last [B, L, 1] to channels-first [B, 1, L]
+        assert input.ndim == 3, f"Expected shape of input to be [B, L, 1], Try reshaping or averaging channels.\n Expected ndims = 3, got ndims = {input.ndim}."
+        assert input.shape[-1] == 1, f"Expected channels of input to be 1, Mono Audio of shape [B, L, 1]. Try reshaping if not working."
         input = input.permute(0, 2, 1)
         return self.preproc(input)
