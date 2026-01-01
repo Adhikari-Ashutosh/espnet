@@ -129,11 +129,10 @@ class ESPnetASRModel(AbsESPnetModel):
             self.joint_network = joint_network
 
             if not transducer_multi_blank_durations:
-                from warprnnt_pytorch import RNNTLoss
+                from torchaudio.transforms import RNNTLoss
 
                 self.criterion_transducer = RNNTLoss(
                     blank=self.blank_id,
-                    fastemit_lambda=0.0,
                 )
             else:
                 from espnet2.asr.transducer.rnnt_multi_blank.rnnt_multi_blank import (
