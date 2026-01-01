@@ -398,7 +398,8 @@ class ESPnetASRModel(AbsESPnetModel):
             speech: (Batch, Length, ...)
             speech_lengths: (Batch, )
         """
-        with autocast(self.autocast_frontend, dtype=autocast_type):
+        device_type = "cuda" if torch.cuda.is_available() else "cpu"
+        with torch.amp.autocast(device_type=device_type, enabled=self.autocast_frontend, dtype=autocast_type):
             # 1. Extract feats
             feats, feats_lengths = self._extract_feats(speech, speech_lengths)
 
