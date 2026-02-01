@@ -457,3 +457,45 @@ class RelPositionMultiHeadedAttention(MultiHeadedAttention):
         )  # (batch, head, time1, time2)
 
         return self.forward_attention(v, scores, mask)
+
+
+class RoPEMultiHeadedAttention(MultiHeadedAttention):
+    """Multi-Head Attention layer with rotary position encoding (new implementation).
+
+
+
+    Paper: https://arxiv.org/abs/2104.09864
+
+    Args:
+        n_head (int): The number of heads.
+        n_feat (int): The number of features.
+        dropout_rate (float): Dropout rate.
+
+
+    """
+
+    def __init__(self, n_head, n_feat, dropout_rate):
+        """Construct an RotPositionMultiHeadedAttention object."""
+        super().__init__(n_head, n_feat, dropout_rate)
+        raise NotImplementedError("RoPEMultiHeadedAttention is not implemented yet.")
+
+    def forward(self, query, key, value, pos_emb, mask):
+        """Compute 'Scaled Dot Product Attention' with rotary positional encoding.
+
+        Args:
+            query (torch.Tensor): Query tensor (#batch, time1, size).
+            key (torch.Tensor): Key tensor (#batch, time2, size).
+            value (torch.Tensor): Value tensor (#batch, time2, size).
+            pos_emb (torch.Tensor): Positional embedding tensor
+                (#batch, 2*time1-1, size).
+            mask (torch.Tensor): Mask tensor (#batch, 1, time2) or
+                (#batch, time1, time2).
+        Returns:
+            torch.Tensor: Output tensor (#batch, time1, d_model).
+            
+        """
+        q, k, v = self.forward_qkv(query, key, value)
+        
+        raise NotImplementedError("RoPEMultiHeadedAttention is not implemented yet.")
+        
+        

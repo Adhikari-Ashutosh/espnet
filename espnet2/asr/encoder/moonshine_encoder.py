@@ -16,10 +16,15 @@ from typeguard import typechecked
 
 from espnet2.asr.encoder.abs_encoder import AbsEncoder
 from espnet2.asr.specaug.specaug import SpecAug
-
+from espnet.nets.pytorch_backend.transformer.repeat import repeat
 from espnet.nets.pytorch_backend.transformer.embedding import RotaryPositionalEmbedding
-from someplace.somewhere import Moonshine_custom_MHA
-
+from someplace.somewhere import Moonshine_custom_MHA # Why not use the standard MHA with RoPE applied to Q and K?
+from espnet.nets.pytorch_backend.transformer.attention import (  # noqa: H301
+    LegacyRelPositionMultiHeadedAttention,
+    MultiHeadedAttention,
+    RelPositionMultiHeadedAttention,
+    RoPEMultiHeadedAttention
+)
 @typechecked
 class MoonShineEncoderLayer(torch.nn.Module):
     """
@@ -38,7 +43,7 @@ class MoonShineEncoderLayer(torch.nn.Module):
 
             Ingredients:
                 1. Layer Norm (norm1)
-                2. MHAWithRope (What the helll OH MY GAWD NO WAYIYIAY)
+                2. MHAWithRope (What the helll OH MY GAWD NO WAYIYIAY) (Comes in main encoder)
                 3. Layer Norm (norm2)
                 4. FFSwiglu or FFGelu (ff)
 
@@ -69,9 +74,7 @@ class MoonShineEncoderLayer(torch.nn.Module):
         # A bit Meta but not using ^ because by default affine with bias is enabled... (Maybe a toggle Hyperparam could be introduced)
         # But default Norm in Moonshine is affine with no center (beta) but scale (gamma)... refer given doc
         self.norm2 = torch.nn.LayerNorm(dim, bias=False) 
-        self.attn = Moonshine_custom_MHA(dim,n_head,inner_dim) # Here I really just want vanilla/or Fast MHA but RoPE applied to Q and K
-        # Thought: Can I just use My RoPE and then use standard MHA or Fastformer MHA? (WTF is a fastformer MHA)
-        # Anyways will visit you again :) 
+        self.attn = MultiHeadedAttention(dim,n_head,inner_dim) # Using standard MHA with RoPE applied to Q and K inside Encoder
         # Really like how E-Branchformer arranges this...
         self.enc_ff_swiglu = enc_ff_swiglu
         if enc_ff_swiglu:
@@ -85,7 +88,7 @@ class MoonShineEncoderLayer(torch.nn.Module):
     def forward(
             self,
             x_input,
-            rot_pos_emb
+            rot_pos_emb # My forward in the MHA needs this too
     ):
         """
         Args:
@@ -94,7 +97,7 @@ class MoonShineEncoderLayer(torch.nn.Module):
         """
         _x = x_input
         x_input = self.norm1(x_input)
-        x_input = self.attn(x_input,rot_pos_emb)
+        x_input = self.attn(x_input,rot_pos_emb) # RoPE applied inside MHA
         x_input = x_input +_x
         _x = x_input 
         x_input = self.norm2(x_input)
@@ -124,6 +127,10 @@ class MoonShineEncoder(AbsEncoder):
         enc_ff_swiglu: int,optional. Flag to set and use Swiglu FFN layer, Uses Gelu by default
         dtype: str, optional. The dtype to use for model computations and
             weights. Defaults to None.
+    #TODO: Remove during clean up
+    We need to add the following things:
+        1. Implement batch by supporting padding masks <Need to figure where this goes;mostly passed to forward>
+        2. 
     """
     def __init__(
         self,
